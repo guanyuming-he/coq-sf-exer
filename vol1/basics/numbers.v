@@ -35,3 +35,6 @@ Fixpoint leb (n m : nat) : bool :=
       | S m' => leb n' m'
       end
   end.
+
+Notation "x =? y" := (eqb x y) (at level 70) : nat_scope.
+Notation "x <=? y" := (leb x y) (at level 70) : nat_scope.

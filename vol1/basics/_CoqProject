@@ -4,3 +4,4 @@
 ./numbers.v
 ./factorial.v
 ./ltb.v
+./proof_rewriting.v

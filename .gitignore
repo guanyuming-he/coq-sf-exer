@@ -1,3 +1,7 @@
+# Vim
+*.swp
+
+
 # Copied from https://github.com/github/gitignore/blob/main/Coq.gitignore
 
 .*.aux
