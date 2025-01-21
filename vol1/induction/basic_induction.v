@@ -31,7 +31,7 @@ Theorem add_comm : forall n m : nat,
 Proof.
   intros n.
   induction n as [| n' IHn'].
-  - simpl. intros m. (* symmetry of equality *) apply eq_sym. apply add_0_r.
+  - simpl. intros m. rewrite -> add_0_r. reflexivity.
   - intros m. simpl. rewrite -> IHn'. apply plus_n_Sm.
 Qed.
 

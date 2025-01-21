@@ -1,3 +1,7 @@
 -Q . LF
 ./Basics.v
 ./basic_induction.v
+./double_plus.v
+./eqb_refl.v
+./even_S.v
+./more/mul_comm.v
