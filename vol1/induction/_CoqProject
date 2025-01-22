@@ -5,3 +5,4 @@
 ./eqb_refl.v
 ./even_S.v
 ./more/mul_comm.v
+./more/more_exercises.v
