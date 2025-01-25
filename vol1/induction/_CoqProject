@@ -7,3 +7,4 @@
 ./more/mul_comm.v
 ./more/more_exercises.v
 ./nat_bin/nat2bin.v
+./nat_bin/bin2nat.v
