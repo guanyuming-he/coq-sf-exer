@@ -6,3 +6,4 @@
 ./even_S.v
 ./more/mul_comm.v
 ./more/more_exercises.v
+./nat_bin/nat2bin.v
