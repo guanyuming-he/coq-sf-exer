@@ -40,27 +40,20 @@ Fixpoint incr (m:bin) : bin
    *)
   match m with
   | Z => B1 Z
-  | B0 Z => B1 Z (* step 5.i *)
-  | B1 Z => B0 (B1 Z) (* step 5.ii *)
+  (* included by others, step 5.i | B0 Z => B1 Z *)
+  (* included by others, step 5.ii | B1 Z => B0 (B1 Z) *)
   | B0 n => B1 n (* step 3 *)
   | B1 n => B0 (incr n) (* step 4 *)
   end.
 
-(* It would be much simpler with this version that takes an additional depth
-  parameter *)
-Fixpoint internal_bin_to_nat (depth : nat) (b : bin) : nat
-  :=
-  (* Whenever we encounter 1, add 2^n to the number *)
-  match b with 
-  | Z => 0
-  | B0 n => 0 + (internal_bin_to_nat (depth+1) n)
-  | B1 n => (Nat.pow 2 depth) + (internal_bin_to_nat (depth+1) n)
-  end.
-
 Fixpoint bin_to_nat (m:bin) : nat
   :=
-  (* start from 2^0, the least significant bit *)
-  internal_bin_to_nat 0 m.
+  (* starting from the least significant bit makes it easier. *)
+  match m with
+  | Z => 0 
+  | B0 n => 2 * (bin_to_nat n)
+  | B1 n => 1 + (2 * (bin_to_nat n))
+  end.
 
 Example test_bin_incr1 : (incr (B1 Z)) = B0 (B1 Z).
 Proof. simpl. reflexivity. Qed.
