@@ -3,4 +3,6 @@
 ./Induction.v
 ./defns.v
 ./swap.v
+./list_funs.v
+./bag.v
 
