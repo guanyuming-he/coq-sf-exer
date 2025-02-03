@@ -1,4 +1,6 @@
 -Q . LF
 ./Basics.v
 ./Induction.v
+./defns.v
+./swap.v
 
