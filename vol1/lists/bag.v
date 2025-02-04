@@ -114,3 +114,20 @@ Example test_included1: included [1;2] [2;1;4;1] = true.
 Proof. reflexivity. Qed.
 Example test_included2: included [1;2;2] [2;1;4;1] = false.
 Proof. reflexivity. Qed.
+
+
+Theorem add_inc_count : forall v : nat, forall b : bag,
+  S (count v b) = count v (add v b).
+Proof.
+  intros v b.
+  assert (forall v : nat, v =? v = true) as H. 
+  { intros v'. induction v'.
+    - reflexivity.
+    - rewrite <- IHv'. simpl. reflexivity.
+  }
+  destruct b.
+  - simpl. 
+    rewrite -> H. reflexivity. 
+  - simpl. 
+    rewrite -> H. reflexivity. 
+Qed.
