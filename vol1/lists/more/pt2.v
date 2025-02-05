@@ -1,4 +1,4 @@
-From LF Require Import defns list_funs bag.
+From LF Require Import defns list_funs bag more.pt1.
 
 Theorem count_member_nonzero : forall (s : bag),
   1 <=? (count 1 (1 :: s)) = true.
@@ -40,5 +40,45 @@ Proof.
     + rewrite -> IHb. reflexivity.
 Qed.
 
+
+Theorem involution_injective : forall (f : nat -> nat),
+    (forall n : nat, n = f (f n)) -> (forall n1 n2 : nat, f n1 = f n2 -> n1 = n2).
+Proof.
+  intros f H1.
+  intros n1 n2.
+  intros H2.
+  assert (f(f n1) = f(f n2)) as lem.
+  {
+    rewrite -> H2. reflexivity.
+  }
+  rewrite <- H1 in lem.
+  rewrite <- H1 in lem.
+  exact lem.
+Qed.
+
+Theorem rev_injective : forall (l1 l2 : natlist),
+  rev l1 = rev l2 -> l1 = l2.
+Proof.
+  (* assert the previous theorem, but for natlist *)
+  assert (forall (f : natlist -> natlist),
+    (forall n : natlist, n = f (f n)) -> (forall n1 n2 : natlist, f n1 = f n2 -> n1 = n2))
+  as involution_injective_natlist.
+  {
+    (* copy and paste the previous proof here. *)
+    intros f H1.
+    intros n1 n2.
+    intros H2.
+    assert (f(f n1) = f(f n2)) as lem.
+    {
+      rewrite -> H2. reflexivity.
+    }
+    rewrite <- H1 in lem.
+    rewrite <- H1 in lem.
+    exact lem.
+  }
+  apply involution_injective_natlist.
+  intros n. rewrite -> rev_involutive.
+  reflexivity.
+Qed.
 
 
