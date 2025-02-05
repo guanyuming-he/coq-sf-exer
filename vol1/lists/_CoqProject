@@ -7,4 +7,6 @@
 ./bag.v
 ./more/pt1.v
 ./more/pt2.v
+./options.v
+./partial_maps.v
 
