@@ -30,36 +30,15 @@ Qed.
 Theorem bag_count_sum: forall b c : bag, forall n : nat,
   count n (sum b c) = (count n b) + (count n c).
 Proof.
-  intros b c.
-  induction b, c.
+  intros b.
+  induction b.
   - simpl. reflexivity.
-  - simpl. reflexivity.
-  - simpl. intros n0. rewrite -> add_0_r. reflexivity.
-  - simpl. 
-    intros n1. 
+  - simpl.
+    intros c n0.
+    destruct (n =? n0).
+    + rewrite -> IHb. reflexivity.
+    + rewrite -> IHb. reflexivity.
+Qed.
 
-    assert (forall p q: nat, (p =? q = true) -> p = q) as lem1.
-    { 
-      intros p.
-      induction p.
-      - intros q. destruct q.
-        + reflexivity.
-        + simpl. discriminate.
-      - simpl. intros q. destruct q.
-        + discriminate.
-        + intros H. apply IHp in H. rewrite -> H. reflexivity.
-    }
-    destruct (n =? n0) eqn:H1.
-    { destruct (n =? n1) eqn:H2.
-      - apply lem1 in H1. apply lem1 in H2.
-        rewrite <- H1. rewrite <- H2.
-        rewrite -> eqb_refl.
-        assert 
-        ( count n0 (sum b (n0 :: c)) = count n0 b + S (count n0 c)) as temp.
-        {
-          rewrite -> IHb. simpl. rewrite -> eqb_refl. reflexivity.
-        }
-        rewrite -> H1.
-        simpl. rewrite <- temp. simpl.
 
-        
+

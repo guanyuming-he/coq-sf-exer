@@ -23,7 +23,7 @@ Example test_count2: count 6 [1;2;3;1;4;1] = 0.
   * https://coq.inria.fr/doc/V8.20.0/refman/language/core/assumptions.html#functions-fun-and-function-types-forall
   * for what this bag -> bag -> bag is *)
  Definition sum : bag -> bag -> bag
-   := alternate.
+   := app.
 
 Example test_sum1: count 1 (sum [1;2;3] [1;4;1]) = 3.
 Proof. reflexivity. Qed.

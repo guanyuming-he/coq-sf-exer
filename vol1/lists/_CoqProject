@@ -6,4 +6,5 @@
 ./list_funs.v
 ./bag.v
 ./more/pt1.v
+./more/pt2.v
 
