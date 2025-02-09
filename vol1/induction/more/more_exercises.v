@@ -1,5 +1,4 @@
-Require Import LF.Basics.
-Require Import LF.basic_induction.
+From LF Require Import induction.basic_induction.
 
 Theorem leb_refl : forall n:nat,
   (n <=? n) = true.
@@ -43,7 +42,7 @@ Theorem all3_spec : forall b c : bool,
   = true.
 Proof.
   intros b c.
-  destruct (b && c) eqn:H .
+  destruct (b && c) eqn:H.
   - simpl. reflexivity.
   - simpl. destruct b. 
     { simpl. destruct c. 

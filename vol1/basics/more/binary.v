@@ -1,3 +1,5 @@
+From LF Require Import basics.numbers.
+
 Inductive bin : Type :=
   | Z
   | B0 (n : bin)

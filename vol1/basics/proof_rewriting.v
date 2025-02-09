@@ -1,5 +1,4 @@
-Require Import booleans.
-Require Import numbers.
+From LF Require Import basics.numbers.
 
 Theorem plus_id_exercise : forall n m o : nat,
   n = m -> m = o -> n + m =  m + o.

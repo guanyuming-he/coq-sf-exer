@@ -1,5 +1,4 @@
-From LF Require Import defns.
-From LF Require Import list_funs.
+From LF.lists Require Import defns list_funs.
 
 Definition bag := natlist.
 

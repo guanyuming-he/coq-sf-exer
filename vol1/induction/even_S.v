@@ -1,4 +1,4 @@
-Require Import LF.Basics.
+From LF Require Export numbers.
 
 Theorem even_S: forall n : nat,
   even (S n) = negb (even n).

@@ -1,4 +1,4 @@
-From LF Require Import defns list_funs.
+From LF.lists Require Import defns list_funs.
 
 Inductive natoption : Type :=
   | Some (n : nat)

@@ -1,4 +1,4 @@
-Require booleans.
+From LF Require Import basics.booleans.
 
 Definition nandb (b1:bool) (b2:bool) : bool
   :=

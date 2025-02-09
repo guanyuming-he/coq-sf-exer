@@ -1,5 +1,4 @@
-Require Import booleans.
-Require Import numbers.
+From LF Require Import basics.numbers.
 
 Definition ltb (n m : nat) : booleans.bool
   :=

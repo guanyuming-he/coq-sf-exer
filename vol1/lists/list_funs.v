@@ -1,4 +1,4 @@
-From LF Require Import defns.
+From LF Require Import lists.defns.
 
 Fixpoint nonzeros (l:natlist) : natlist
   :=

@@ -1,4 +1,4 @@
-From LF Require Export Induction.
+From LF Require Export induction.basic_induction.
 
 Inductive natprod : Type :=
   | pair (n1 n2 : nat).

@@ -1,6 +1,4 @@
-Require Import LF.Basics.
-Require Import LF.double_plus.
-Require Import LF.nat_bin.nat2bin.
+From LF Require Import induction.nat_bin.nat2bin.
 
 (*  returns 2 times b, which is simple in the binary case:
     just append 0 before the least significant bit. *)

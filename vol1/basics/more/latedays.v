@@ -1,6 +1,4 @@
-(* I will use the standard natural numbers *)
-Require Import Coq.Arith.PeanoNat.
-Notation "a <? b" := (Nat.ltb a b) (at level 70).
+From LF Require Import basics.numbers.
 
 Module LateDays.
 
@@ -175,18 +173,18 @@ Proof.
 Qed.
 
 Definition apply_late_policy (late_days : nat) (g : grade) : grade :=
-  if late_days <? 9 then g
-  else if late_days <? 17 then lower_grade g
-  else if late_days <? 21 then lower_grade (lower_grade g)
+  if late_days <=? 8 then g
+  else if late_days <=? 16 then lower_grade g
+  else if late_days <=? 20 then lower_grade (lower_grade g)
   else lower_grade (lower_grade (lower_grade g)).
 
  Theorem apply_late_policy_unfold :
   forall (late_days : nat) (g : grade),
     (apply_late_policy late_days g)
     =
-    (if late_days <? 9 then g else
-       if late_days <? 17 then lower_grade g
-       else if late_days <? 21 then lower_grade (lower_grade g)
+    (if late_days <=? 8 then g else
+       if late_days <=? 16 then lower_grade g
+       else if late_days <=? 20 then lower_grade (lower_grade g)
             else lower_grade (lower_grade (lower_grade g))).
 Proof.
   intros. reflexivity.
@@ -194,7 +192,7 @@ Qed.
 
  Theorem no_penalty_for_mostly_on_time :
   forall (late_days : nat) (g : grade),
-  (late_days <? 9 = true) ->
+  (late_days <=? 8 = true) ->
     apply_late_policy late_days g = g.
 Proof.
   intros d g.
@@ -206,8 +204,8 @@ Qed.
 
 Theorem grade_lowered_once :
   forall (late_days : nat) (g : grade),
-  (late_days <? 9 = false) ->
-  (late_days <? 17 = true) ->
+  (late_days <=? 8 = false) ->
+  (late_days <=? 16 = true) ->
   (grade_comparison (Grade F Minus) g = Lt) ->
     (apply_late_policy late_days g) = (lower_grade g).
 Proof.

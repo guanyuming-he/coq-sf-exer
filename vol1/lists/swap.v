@@ -1,4 +1,4 @@
-From LF Require Import defns.
+From LF Require Import lists.defns.
 
 Theorem snd_fst_is_swap : forall (p : natprod),
   (snd p, fst p) = swap_pair p.

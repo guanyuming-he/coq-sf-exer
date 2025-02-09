@@ -1,4 +1,4 @@
-Require Import LF.Basics.
+From LF Require Export basics.numbers.
 
 (* Need this to prove commutativity of addition *)
 Theorem add_0_r : forall n:nat, n + 0 = n.

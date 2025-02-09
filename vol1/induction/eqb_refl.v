@@ -1,4 +1,4 @@
-Require Import LF.Basics.
+From LF Require Export numbers.
 
 Theorem eqb_refl : forall n : nat,
   (n =? n) = true.

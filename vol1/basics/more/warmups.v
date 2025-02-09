@@ -1,3 +1,5 @@
+From LF Require Import basics.booleans.
+
 Theorem identity_fn_applied_twice : 
   forall (f : bool -> bool),
   (forall (x : bool), f x = x) -> forall (b : bool), f (f b) = b.

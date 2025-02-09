@@ -1,5 +1,5 @@
-Require Import LF.Basics.
-Require Import LF.basic_induction.
+From LF Require Import basics.numbers.
+From LF Require Import induction.basic_induction.
 
 Fixpoint double (n:nat) := 
   match n with 

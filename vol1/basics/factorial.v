@@ -1,10 +1,10 @@
-Require Import numbers.
+From LF Require Import basics.numbers.
 
 Fixpoint factorial (n:nat) : nat
   :=
   match n with
   | 0 => S 0
-  | S n' => mul n (factorial n')
+  | S n' => mult n (factorial n')
   end.
 
 Example test_factorial1: (factorial 3) = 6.

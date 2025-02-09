@@ -1,5 +1,4 @@
-Require Import LF.Basics.
-Require Import LF.basic_induction.
+From LF Require Import induction.basic_induction.
 
 Theorem add_shuffle3 : forall n m p : nat,
   n + (m + p) = m + (n + p).

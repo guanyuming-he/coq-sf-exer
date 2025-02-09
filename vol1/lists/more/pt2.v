@@ -1,4 +1,4 @@
-From LF Require Import defns list_funs bag more.pt1.
+From LF.lists Require Import defns list_funs bag more.pt1.
 
 Theorem count_member_nonzero : forall (s : bag),
   1 <=? (count 1 (1 :: s)) = true.

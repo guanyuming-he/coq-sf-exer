@@ -1,16 +1,5 @@
-Require Import LF.Basics.
-Require Import LF.basic_induction.
-
-(* copied from ../../basics/more/binary.v, as required by the exercise *)
-Fixpoint incr (m:bin) : bin
-  :=
-  match m with
-  | Z => B1 Z
-  (* included by others, step 5.i | B0 Z => B1 Z *)
-  (* included by others, step 5.ii | B1 Z => B0 (B1 Z) *)
-  | B0 n => B1 n (* step 3 *)
-  | B1 n => B0 (incr n) (* step 4 *)
-  end.
+From LF Require Export basics.more.binary.
+From LF Require Export induction.basic_induction.
 
 Fixpoint bin_to_nat (m:bin) : nat
   :=

@@ -1,4 +1,4 @@
-Require Import numbers.
+From LF Require Import basics.numbers.
 
 (* 
    The exercise asks me to write a fixpoint function that does terminate on all
@@ -17,6 +17,8 @@ Require Import numbers.
    Let's set N := 3 for now.
 *)
 
+   (*
+   The following computation cannot run.
 
 Fixpoint g (n: nat) : nat :=
   if n =? 0 then 0
@@ -24,4 +26,5 @@ Fixpoint g (n: nat) : nat :=
   else 0.
 
 Compute (g 1).
+    *)
 

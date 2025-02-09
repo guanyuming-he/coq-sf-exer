@@ -1,4 +1,5 @@
-From LF Require Import Induction options.
+From LF.induction Require Import eqb_refl. 
+From LF.lists Require Import defns options.
 
 Inductive id : Type :=
   | Id (n : nat).

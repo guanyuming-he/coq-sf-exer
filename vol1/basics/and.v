@@ -1,4 +1,4 @@
-Require booleans.
+From LF Require Import basics.booleans.
 
 Definition andb3 (b1:bool) (b2:bool) (b3:bool) : bool
   :=
