@@ -69,3 +69,52 @@ Fail Definition brackets := [].
 Definition success : list nat := [].
 End DelayedExpansion.
 
+Inductive prod (X Y : Type) : Type :=
+| pair (x : X) (y : Y).
+Arguments pair {X} {Y}.
+
+Notation "( x , y )" := (pair x y).
+
+Notation "X * Y" := (prod X Y) : type_scope.
+
+Definition fst {X Y : Type} (p : X * Y) : X :=
+  match p with
+  | (x, y) => x
+  end.
+Definition snd {X Y : Type} (p : X * Y) : Y :=
+  match p with
+  | (x, y) => y
+  end.
+
+(* ends with the shortest of lx and ly *)
+Fixpoint combine {X Y : Type} (lx : list X) (ly : list Y)
+  : list (X * Y) :=
+  match lx, ly with
+  | [], _ => []
+  | _, [] => []
+  | x :: tx, y :: ty => (x, y) :: (combine tx ty)
+  end.
+
+ Module OptionPlayground.
+Inductive option (X:Type) : Type :=
+  | Some (x : X)
+  | None.
+Arguments Some {X}.
+Arguments None {X}.
+End OptionPlayground.
+
+Fixpoint nth_error {X : Type} (l : list X) (n : nat)
+                   : option X :=
+  match l with
+  | nil => None
+  | a :: l' => match n with
+               | O => Some a
+               | S n' => nth_error l' n'
+               end
+  end.
+Example test_nth_error1 : nth_error [4;5;6;7] 0 = Some 4.
+Proof. reflexivity. Qed.
+Example test_nth_error2 : nth_error [[1];[2]] 1 = Some [2].
+Proof. reflexivity. Qed.
+Example test_nth_error3 : nth_error [true] 2 = None.
+Proof. reflexivity. Qed.
