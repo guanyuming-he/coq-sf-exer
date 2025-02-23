@@ -118,3 +118,24 @@ Example test_nth_error2 : nth_error [[1];[2]] 1 = Some [2].
 Proof. reflexivity. Qed.
 Example test_nth_error3 : nth_error [true] 2 = None.
 Proof. reflexivity. Qed.
+
+Fixpoint filter {X:Type} (test: X -> bool) (l:list X) : list X :=
+  match l with
+  | [] => []
+  | h :: t =>
+    if test h then h :: (filter test t)
+    else filter test t
+  end.
+
+Fixpoint map {X Y : Type} (f : X->Y) (l : list X) : list Y :=
+  match l with
+  | [] => []
+  | h :: t => (f h) :: (map f t)
+  end.
+
+Fixpoint fold {X Y: Type} (f : X->Y->Y) (l : list X) (b : Y)
+                         : Y :=
+  match l with
+  | nil => b
+  | h :: t => f h (fold f t b)
+  end.
