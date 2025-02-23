@@ -119,6 +119,10 @@ Proof. reflexivity. Qed.
 Example test_nth_error3 : nth_error [true] 2 = None.
 Proof. reflexivity. Qed.
 
+Definition doit3times {X : Type} (f : X->X) (n : X) : X :=
+  f (f (f n)).
+
+
 Fixpoint filter {X:Type} (test: X -> bool) (l:list X) : list X :=
   match l with
   | [] => []
