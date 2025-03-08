@@ -72,6 +72,13 @@ Fixpoint leb (n m : nat) : bool :=
       end
   end.
 
+Definition minustwo (n : nat) : nat :=
+  match n with
+  | O => O
+  | S O => O
+  | S (S n') => n'
+  end.
+
 (* notations *)
 
 Notation "x + y" := (plus x y)
