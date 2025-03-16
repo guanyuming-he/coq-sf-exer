@@ -74,7 +74,7 @@ Definition split_combine_statement : Prop
 Theorem split_combine : split_combine_statement.
 Proof.
   intros X Y l.
-  induction l.
+  induction l as [| h t IHl].
   - destruct l1 as [| h1 t1] eqn:El1, l2 as [| h2 t2] eqn:El2.
     + simpl. reflexivity.
     + simpl. discriminate.
@@ -89,7 +89,7 @@ Proof.
       intros H1. injection H1 as H2 H3.
       apply IHl in Ht1t2.
       { 
-        rewrite -> Ht1t2. destruct x. 
+        rewrite -> Ht1t2. destruct h. 
         injection H2 as H4 H5.
         rewrite -> H4. rewrite -> H5.
         reflexivity.
