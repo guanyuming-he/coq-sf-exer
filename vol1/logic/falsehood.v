@@ -50,3 +50,29 @@ Proof.
   destruct H.
   apply H0 in H. apply H.
 Qed.
+
+(**
+  * not_PNP_informal
+  Suppose for the sake of contradiction that P /\ ~P.
+  Then, we have P and ~P, and then a contradiction.
+ *)
+
+Theorem de_morgan_not_or : forall (P Q : Prop),
+  ~ (P \/ Q) -> ~P /\ ~Q.
+Proof.
+  intros P Q.
+  intros H.
+  unfold not in H.
+  unfold not.
+  split.
+  - intros HP. apply H. left. apply HP.
+  - intros HQ. apply H. right. apply HQ.
+Qed.
+
+Lemma not_S_pred_n : ~(forall n : nat, S (pred n) = n).
+Proof.
+  unfold not.
+  intros H.
+  specialize H with (n := 0).
+  discriminate.
+Qed
