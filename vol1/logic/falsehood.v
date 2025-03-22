@@ -75,4 +75,15 @@ Proof.
   intros H.
   specialize H with (n := 0).
   discriminate.
-Qed
+Qed.
+
+Theorem not_true_is_false : forall b : bool,
+  b <> true -> b = false.
+Proof.
+  intros b.
+  unfold not.
+  intros H.
+  destruct b.
+  - exfalso. apply H. reflexivity.
+  - reflexivity.
+Qed.
