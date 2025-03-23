@@ -53,9 +53,11 @@ Qed.
 
 (**
   * not_PNP_informal
-  Suppose for the sake of contradiction that P /\ ~P.
-  Then, we have P and ~P, and then a contradiction.
- *)
+    We prove that P /\ ~P would lead to Falsehood.
+    By /\, we have both P and ~P. By ~P,
+     we have P -> False.
+    Thus, we have False.
+   *)
 
 Theorem de_morgan_not_or : forall (P Q : Prop),
   ~ (P \/ Q) -> ~P /\ ~Q.

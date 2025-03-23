@@ -34,9 +34,10 @@ Qed.
 (** nth_error_informal
   We induct on n.
   When n = 0,
-  we show that l must equals to nil.
-  Suppose for the sake of contradiction that 
-  it equals h :: t instead, then by the definition    of length, length l equals S (length t), not equal to 0, a contradiction.
+  by the injectivity of list constructors,
+  l must be nil, otherwise length l equals S length l', not 0.
+  
+   equals h :: t instead, then by the definition    of length, length l equals S (length t), not equal to 0, a contradiction.
 
   Thus, l equals nil. Thus, by definition, nth_error l n = None.
 
