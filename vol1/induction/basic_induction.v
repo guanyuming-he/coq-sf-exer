@@ -17,6 +17,15 @@ Proof.
   - simpl. rewrite -> IHn'. reflexivity.
 Qed.
 
+(* My own lemma. It's just unfolding the defn,
+   but it's needed many times as we can't apply the defn *)
+Lemma plus_Sn_m : forall n m : nat,
+  S (n + m) = S n + m.
+Proof.
+  intros n m.
+  reflexivity.
+Qed.
+
 Theorem plus_n_Sm : forall n m : nat,
   S (n + m) = n + (S m).
 Proof.

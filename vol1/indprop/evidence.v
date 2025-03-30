@@ -130,3 +130,123 @@ Proof.
 Qed.
 
 
+Inductive ev' : nat -> Prop :=
+  | ev'_0 : ev' 0
+  | ev'_2 : ev' 2
+  | ev'_sum n m (Hn : ev' n) (Hm : ev' m) : ev' (n + m).
+
+Theorem ev'_ev : forall n, ev' n <-> ev n.
+Proof.
+  intros n.
+  split.
+  - intros E. induction E.
+    + apply ev_0.
+    + apply ev_SS. apply ev_0.
+    + apply (ev_sum n m IHE1 IHE2).
+  - intros E. induction E.
+    + apply ev'_0.
+    + assert (S (S n) = n + 2).
+      { 
+        assert (forall n, S n = n+1).
+        { intros n0. rewrite -> add_comm.
+          reflexivity. }
+        rewrite -> H. rewrite -> H.
+        rewrite <- add_assoc.
+        reflexivity.
+      }
+      rewrite -> H.
+      apply (ev'_sum n 2 IHE ev'_2).
+Qed.
+
+(* For list X*)
+From LF.poly Require Import defns.
+(* For In *)
+From LF.logic Require Import prog_props.
+
+Lemma Perm3_symm : forall (X : Type) (l1 l2 : list X),
+  Perm3 l1 l2 -> Perm3 l2 l1.
+Proof.
+  intros X l1 l2 E.
+  induction E as [a b c | a b c | l1 l2 l3 E12 IH12 E23 IH23].
+  - apply perm3_swap12.
+  - apply perm3_swap23.
+  - apply (perm3_trans _ l2 _).
+    + apply IH23.
+    + apply IH12.
+Qed.
+
+Lemma Perm3_In : forall (X : Type) (x : X) (l1 l2 : list X),
+    Perm3 l1 l2 -> In x l1 -> In x l2.
+Proof.
+  intros X x l1 l2.
+  intros E1 E2.
+  induction E1.
+  - unfold In in E2.
+    unfold In.
+    destruct E2 as [H1 | [H2 | [H3 | H4] ] ].
+    + right. left. apply H1.
+    + left. apply H2.
+    + right. right. left. apply H3.
+    + destruct H4.
+  - unfold In in E2.
+    unfold In.
+    destruct E2 as [H1 | [H2 | [H3 | H4] ] ].
+    + left. apply H1.
+    + right. right. left. apply H2.
+    + right. left. apply H3.
+    + destruct H4.
+  - apply IHE1_1 in E2. apply IHE1_2 in E2.
+    apply E2.
+Qed.
+
+Lemma Perm3_NotIn : forall (X : Type) (x : X) (l1 l2 : list X),
+  Perm3 l1 l2 -> ~In x l1 -> ~In x l2.
+Proof.
+  intros X x l1 l2.    
+  intros E1 E2.
+  unfold not. unfold not in E2.
+  induction E1.
+  - unfold In in E2.
+    unfold In.
+    intros [H1 | [H2 | [H3|H4]]].
+    + apply E2. right. left. apply H1.
+    + apply E2. left. apply H2.
+    + apply E2. right. right. left. apply H3.
+    + destruct H4.
+  - unfold In in E2.
+    unfold In.
+    intros [H1 | [H2 | [H3|H4]]].
+    + apply E2. left. apply H1.
+    + apply E2. right. right. left. apply H2.
+    + apply E2. right. left. apply H3.
+    + destruct H4.
+  - apply IHE1_2. 
+    apply (IHE1_1 E2).
+Qed.
+
+Example Perm3_example2 : ~Perm3 [1;2;3] [1;2;4].
+Proof.
+  unfold not.
+  intros E.
+  inversion E.
+  assert (In 3 [1;2;3]).
+  (* goal: show that 3 or 4 is in l2, and thus consequently
+     in [1;2;4] or [1;2;3] *)
+  { unfold In. right. right. left. reflexivity. }
+  apply (Perm3_In nat 3 [1;2;3] l2 H) in H3.
+  apply (Perm3_In nat 3 l2 [1;2;4] H0) in H3.
+  unfold In in H3.
+  destruct H3 as [F1|[F2|[F3|F4]]].
+  - discriminate F1.
+  - discriminate F2.
+  - discriminate F3.
+  - destruct F4.
+Qed.
+
+
+
+
+
+
+
+
