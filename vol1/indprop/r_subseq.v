@@ -72,30 +72,56 @@ From LF.logic Require Import prog_props.
 Inductive subseq : list nat -> list nat -> Prop :=
   | ss_empty (l2 : list nat) : 
       subseq [] l2
-      (* here we must take it one step at a time *)
-  | ss_cons_l1 (n : nat) (l1 l2 : list nat) : 
-      subseq l1 l2 /\ In n l2 -> subseq (n::l1) l2 
-  | ss_app_l2 (l1 l2 l3 : list nat) :
-      subseq l1 l2 \/ subseq l1 l3 -> subseq l1 (l2++l3).
+      (* with this we are able to expand l1 with l2.
+         Note that in general we can't expand l1 only.
+         we could write something like
+         subseq l1 l2 /\ In n l2 -> subseq (n::l1) l2,
+         but that will confuse induction and it won't generate 
+         an inductive hypothesis,
+         unless I later figured out we could put In n l2
+         as one of the parameters.
+         But I haven't tried that way.
+         *)
+  | ss_cons_l1l2 (n : nat) (l1 l2 : list nat) : 
+      subseq l1 l2 -> subseq (n::l1) (n::l2) 
+      (* with this we are able to expand l2 only *)
+  | ss_cons_l2 (n : nat) (l1 l2 : list nat) :
+      subseq l1 l2 -> subseq l1 (n::l2).
+
+(* My own lemma. c.f. subseq_app *)
+Lemma subseq_app_l : forall (l1 l2 l3 : list nat),
+  subseq l1 l2 -> subseq l1 (l3 ++ l2).
+Proof.
+  intros l1 l2 l3.
+  generalize dependent l2.
+  generalize dependent l1.
+  induction l3.
+  - intros l1 l2 H. simpl. apply H.
+  - intros l1 l2 H.
+    simpl.
+    apply IHl3 in H.
+    apply (ss_cons_l2 _ _ _ H).
+Qed.
+
 
 Theorem subseq_refl : forall (l : list nat), subseq l l.
 Proof.
   intros l. induction l.
   - apply ss_empty.
-  - apply ss_cons_l1.
-    split.
-    + apply (ss_app_l2 l [x] l).
-      right. apply IHl.
-    + unfold In.
-      left. reflexivity.
+  - apply ss_cons_l1l2.
+    apply IHl.
 Qed.
+
 
 Theorem subseq_app : forall (l1 l2 l3 : list nat),
   subseq l1 l2 ->
   subseq l1 (l2 ++ l3).
 Proof.
   intros l1 l2 l3 H.
-  apply ss_app_l2. left. apply H.
+  induction H.
+  - apply ss_empty.
+  - simpl. apply (ss_cons_l1l2 _ _ _ IHsubseq).
+  - simpl. apply (ss_cons_l2 _ _ _ IHsubseq).
 Qed.
   
 
@@ -104,19 +130,30 @@ Theorem subseq_trans : forall (l1 l2 l3 : list nat),
   subseq l2 l3 ->
   subseq l1 l3.
 Proof.
-  intros l1 l2.
+  (* How I come to this choice of inducting on H2 and generalize only on l1?
+     I know it looked quite arbitrary at first glance.
+    1. generally I can't just induct on a list, but that I have to induct on
+    subseq. That is, I either induct on H1 or H2.
+    2. I tried induction on H1. For that, I cannot generalize l1 or l2 since they are in it,
+    so I can only generalize l3, but I was stuck that way.
+    3. Hence I tried inducting on H2, for which I can only generalize l1.
+    And boom it worked. Hence it's my choice *)
+  intros l1 l2 l3 H1 H2.
   generalize dependent l1.
-  induction l2.
-  - intros l1 l3 H1 H2.
-    inversion H1.
+  induction H2.
+  - intros l3 H.
+    destruct l3.
     + apply ss_empty.
-    + destruct H as [_ contra].
-      unfold In in contra.
-      destruct contra.
-    + (* subseq l1 [] \/ subseq _ _ ->
-         subseq l1 ([]++l3)
-       *)
-      apply ss_app_l2 with (l1 := l1) (l2 := []) (l3 := l3).
-      left. apply H1.
-  - 
-
+    + inversion H. (* non-sense *)
+  - intros l3 H.
+    inversion H.
+    + apply ss_empty.
+    + apply IHsubseq in H3.
+      apply ss_cons_l1l2. apply H3.
+    + apply IHsubseq in H3. apply ss_cons_l2.
+      apply H3.
+  - intros l3 H.
+    apply IHsubseq in H. apply ss_cons_l2.
+    apply H.
+Qed.
+    
