@@ -39,3 +39,14 @@ Proof.
     + reflexivity.
     + reflexivity.
 Qed.
+
+Theorem orb_commutative : forall b c, orb b c = orb c b.
+Proof.
+  intros b c. destruct b eqn:Eb.
+  - destruct c eqn:Ec.
+    + reflexivity.
+    + reflexivity.
+  - destruct c eqn:Ec.
+    + reflexivity.
+    + reflexivity.
+Qed.
