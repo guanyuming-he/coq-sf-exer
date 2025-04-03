@@ -23,13 +23,16 @@ Proof.
   (* WORKED IN CLASS *)
   intros H. inversion H. inversion H2. Qed.
 
+
+End Playground.
+
+(* Use our own le *)
+From LF.indprop Require Import defns.
+
 Definition lt (n m : nat) := le (S n) m.
 Notation "n < m" := (lt n m).
 Definition ge (m n : nat) : Prop := le n m.
 Notation "m >= n" := (ge m n).
-
-End Playground.
-
 
 (* for add_0_r *)
 From LF.induction Require Import basic_induction.
@@ -72,10 +75,34 @@ Lemma Sn_le_m__n_le_m : forall n m,
   S n <= m -> n <= m.
 Proof.
   intros n m E.
+  remember (S n) as n'.
   induction E.
-  - apply le_S. apply le_n.
-  - apply (le_S n m IHE).
+  - rewrite -> Heqn'. apply le_S. apply le_n.
+  - apply (le_S n m (IHE Heqn')).
 Qed.
+
+(* Just for my next lemma *)
+Lemma ne_Sn_n : forall n : nat,
+  S n <> n.
+Proof.
+  intros n. unfold not. intros H. induction n.
+  - discriminate.
+  - injection H.
+    apply IHn.
+Qed.
+
+(* My added lemma *)
+Lemma not_le_Sn_n : forall n : nat,
+  ~(S n <= n).
+Proof.
+  intros n. induction n.
+  - unfold not. intros H. inversion H.
+  - unfold not. intros H. inversion H.
+    + apply ne_Sn_n in H2. apply H2. 
+    + apply Sn_le_m__n_le_m in H2.
+      apply IHn in H2. apply H2.
+Qed.
+
 
 Theorem Sn_le_Sm__n_le_m : forall n m,
   S n <= S m -> n <= m.
@@ -83,7 +110,7 @@ Proof.
   intros n m E.
   inversion E.
   - apply le_n.
-  - apply (Sn_le_m__n_le_m n m H0).
+  - apply (Sn_le_m__n_le_m n m H1).
 Qed.
 
 Lemma le_trans : forall m n o, m <= n -> n <= o -> m <= o.
@@ -163,6 +190,7 @@ Proof.
       }
 Qed.
 
+
 Theorem plus_le_compat_l : forall n m p,
   n <= m ->
   p + n <= p + m.
@@ -178,7 +206,6 @@ Proof.
     simpl. apply (n_le_m__Sn_le_Sm (p+n) (p+m) H).
 Qed.
 
-
 Theorem plus_le_compat_r : forall n m p,
   n <= m ->
   n + p <= m + p.
@@ -188,6 +215,16 @@ Proof.
   rewrite -> add_comm with (n := p) (m := n) in H.
   rewrite -> add_comm with (n := p) (m := m) in H.
   apply H.
+Qed.
+
+(* My own theorem, c.f. plus_le_cases *)
+Theorem le_cases_plus : forall n m p q,
+  n <= p -> m <= q -> n+m <= p+q.
+Proof.
+  intros n m p q H1 H2.
+  apply (plus_le_compat_r n p m) in H1.
+  apply (plus_le_compat_l m q p) in H2.
+  apply (le_trans (n+m) (p+m) (p+q) H1 H2).
 Qed.
 
 Theorem le_plus_trans : forall n m p,
@@ -208,7 +245,7 @@ Proof.
   intros n.
   induction n.
   - destruct m.
-    + right. unfold ge. apply le_n.
+    + right. unfold ge. apply (le_n 0).
     + left.  unfold lt. 
       apply (
         n_le_m__Sn_le_Sm 0 m
@@ -310,3 +347,4 @@ Proof.
   rewrite -> leb_iff.
   apply le_trans.
 Qed.
+
