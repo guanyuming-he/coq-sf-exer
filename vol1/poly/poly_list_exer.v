@@ -51,3 +51,19 @@ Proof.
   - simpl. rewrite -> rev_app_distr. rewrite -> IHl.
     simpl. reflexivity.
 Qed.
+
+From LF.induction Require Import basic_induction.
+
+Theorem rev_length : forall (X : Type) (l : list X),
+  length (rev l) = length l.
+Proof.
+  intros X l. induction l.
+  - (* l = nil *)
+    reflexivity.
+  - (* l = cons *)
+    simpl. rewrite -> app_length.
+    simpl. rewrite -> IHl. 
+    rewrite <- plus_n_Sm.
+    rewrite add_0_r.
+    reflexivity.
+Qed.
