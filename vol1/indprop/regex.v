@@ -25,7 +25,7 @@ Inductive exp_match {T} : list T -> reg_exp T -> Prop :=
   | MApp s1 re1 s2 re2
              (H1 : s1 =~ re1)
              (H2 : s2 =~ re2)
-           : (s1 ++ s2) =~ (App re1 re2)
+: (s1 ++ s2) =~ (App re1 re2)
 | MUnionL s1 re1 re2
   (H1 : s1 =~ re1)
               : s1 =~ (Union re1 re2)
@@ -804,42 +804,122 @@ Proof.
        that for s2 to decide which variables to use in exists.
      *)
     destruct 
-      s1 eqn:Es1,
+      (lt_ge_cases (length s1) (pumping_constant re)),
       (lt_ge_cases (length s2) (pumping_constant re)).
     + exists [], s1, s2.
       split. 
-      { rewrite -> Es1. reflexivity. }
+      { simpl. reflexivity. }
       split.
       { 
         unfold not.
         intros H2.
-        simpl in H.
-        simpl in H.
-        unfold lt in H0.
-        (* we now have S (l s2) <= l s2 *)
-        assert (H3 := le_trans _ _ _ H0 H).
-        apply not_le_Sn_n in H3.
-        destruct H3.
+        rewrite -> H2 in *.
+        unfold lt in H0, H1.
+        simpl in *.
+        assert (contra :=
+          le_trans _ _ _ H1 H 
+        ).
+        apply not_le_Sn_n in contra. apply contra.
       }
       split.
       {
-        rewrite -> Es1.
-        simpl. 
-        assert (0 <= 1) as H1. { apply le_S. apply le_n. }
-        apply (le_trans 0 1 (pumping_constant re) H1).
-        apply pumping_constant_ge_1.
+        simpl.
+        apply n_lt_m__n_le_m.
+        apply H0.
       }
       {
-        simpl. intros m. 
-        apply (MStarStarApp T re (napp m s1) s2
-          (MStarNApp _ re s1 (MStar1 _ _ _ Hmatch1) m) Hmatch2
+        intros m. simpl.
+        (* 
+            MStar1 re Hmatch1 gives s1 =~ Star re, then apply MStarNApp to
+            get napp m s1 =~ Star re, and finally use MStarStarApp to get 
+            the desired.
+        *)
+        apply (MStarStarApp T re (napp m s1) s2 
+          ((MStarNApp T re s1 (MStar1 T s1 re Hmatch1)) m) Hmatch2
         ).
       }
-    + apply IH2 in H1.
-      destruct H1 as [s0 [s3 [s4]]].
-      destruct H1 as [H1 [H2 [H3 H4]]].
-      exists [], s1, s2.
-      
+    + (* Need to further prove by cases for s1 here *)
+      destruct s1 as [| h1 t1] eqn:Es1.
+      *
+        apply IH2 in H1.
+        destruct H1 as [s3 [s4 [s5]]].
+        destruct H1 as [H1 [H2 [H3 H4]]].
+        exists s3, s4, s5.
+        split.
+        { simpl. apply H1. }
+        split.
+        { apply H2. }
+        split.
+        { apply H3. }
+        { apply H4. }
+      * exists [], s1, s2.
+        split.
+        { rewrite <- Es1. reflexivity. }
+        split.
+        { unfold not. intros H'. rewrite -> H' in Es1. discriminate Es1. }
+        split.
+        { simpl. apply n_lt_m__n_le_m. rewrite <- Es1 in H0. apply H0. }
+        { 
+          intros m. simpl.
+          apply MStarStarApp.
+          - apply MStarNApp. apply MStar1.  rewrite <- Es1 in Hmatch1. apply Hmatch1.
+          - apply Hmatch2.
+        }
+    + (* Need to further prove by cases for s1, as well *)
+      destruct s1 as [| h1 t1] eqn:Es1.
+      * simpl in H0. 
+        (* 1 <= 0 *)
+        assert (contra :=
+          le_trans _ _ _ 
+          (pumping_constant_ge_1 T re)
+          H0
+        ). 
+        inversion contra.
+      * rewrite <- Es1 in H0, IH1. apply IH1 in H0.
+        destruct H0 as [s3 [s4 [s5]]].
+        destruct H0 as [H2 [H3 [H4 H5]]].
+        exists s3, s4, (s5++s2).
+        split.
+        { 
+          rewrite <- Es1. 
+          rewrite -> app_assoc. rewrite -> app_assoc. 
+          rewrite <- app_assoc with _ s3 s4 s5.
+          rewrite <- H2.
+          reflexivity.
+        }
+        split.
+        { apply H3. }
+        split.
+        { simpl. apply H4. }
+        { 
+          intros m. rewrite -> app_assoc. rewrite -> app_assoc.
+          apply (MStarApp _ s2).
+          { rewrite <- app_assoc. apply H5. }
+          { apply Hmatch2. }
+        }
+    + apply IH1 in H0. apply IH2 in H1.
+      destruct 
+        H0 as [s3 [s4 [s5]]], H1 as [s6 [s7 [s8]]].
+      destruct 
+        H0 as [H2 [H3 [H4 H5]]], H1 as [H6 [H7 [H8 H9]]].
+      exists s3, s4, (s5++s2).
+      split.
+      { 
+        rewrite -> app_assoc. rewrite -> app_assoc.
+        rewrite <- app_assoc with _ s3 s4 s5.
+        rewrite <- H2. reflexivity. 
+      }
+      split.
+      { apply H3. }
+      split.
+      { apply H4. }
+      {
+        intros m.
+        rewrite -> app_assoc. rewrite -> app_assoc.
+        apply (MStarStarApp _ _ _ s2).
+        { apply MStar1. rewrite <- app_assoc. apply H5. }
+        { apply Hmatch2. }
+      }
 Qed.
 
 End Pumping.
