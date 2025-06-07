@@ -304,4 +304,311 @@ Proof.
       * simpl. 
         destruct n; simpl; rewrite -> IHa2; lia.
 Qed.
+
+Module aevalR_first_try.
+Inductive aevalR : aexp -> nat -> Prop :=
+  | E_ANum (n : nat) :
+      aevalR (ANum n) n
+  | E_APlus (e1 e2 : aexp) (n1 n2 : nat) :
+      aevalR e1 n1 ->
+      aevalR e2 n2 ->
+      aevalR (APlus e1 e2) (n1 + n2)
+  | E_AMinus (e1 e2 : aexp) (n1 n2 : nat) :
+      aevalR e1 n1 ->
+      aevalR e2 n2 ->
+      aevalR (AMinus e1 e2) (n1 - n2)
+  | E_AMult (e1 e2 : aexp) (n1 n2 : nat) :
+      aevalR e1 n1 ->
+      aevalR e2 n2 ->
+      aevalR (AMult e1 e2) (n1 * n2).
+Module HypothesisNames.
+
+Inductive aevalR : aexp -> nat -> Prop :=
+  | E_ANum (n : nat) :
+      aevalR (ANum n) n
+  | E_APlus (e1 e2 : aexp) (n1 n2 : nat)
+      (H1 : aevalR e1 n1)
+      (H2 : aevalR e2 n2) :
+      aevalR (APlus e1 e2) (n1 + n2)
+  | E_AMinus (e1 e2 : aexp) (n1 n2 : nat)
+      (H1 : aevalR e1 n1)
+      (H2 : aevalR e2 n2) :
+      aevalR (AMinus e1 e2) (n1 - n2)
+  | E_AMult (e1 e2 : aexp) (n1 n2 : nat)
+      (H1 : aevalR e1 n1)
+      (H2 : aevalR e2 n2) :
+      aevalR (AMult e1 e2) (n1 * n2).
+
+End HypothesisNames.
+
+Notation "e '==>' n"
+         := (aevalR e n)
+            (at level 90, left associativity)
+         : type_scope.
+End aevalR_first_try.
+
+Reserved Notation "e '==>' n" (at level 90, left associativity).
+Inductive aevalR : aexp -> nat -> Prop :=
+  | E_ANum (n : nat) :
+      (ANum n) ==> n
+  | E_APlus (e1 e2 : aexp) (n1 n2 : nat) :
+      (e1 ==> n1) ->
+      (e2 ==> n2) ->
+      (APlus e1 e2) ==> (n1 + n2)
+  | E_AMinus (e1 e2 : aexp) (n1 n2 : nat) :
+      (e1 ==> n1) ->
+      (e2 ==> n2) ->
+      (AMinus e1 e2) ==> (n1 - n2)
+  | E_AMult (e1 e2 : aexp) (n1 n2 : nat) :
+      (e1 ==> n1) ->
+      (e2 ==> n2) ->
+      (AMult e1 e2) ==> (n1 * n2)
+where "e '==>' n" := (aevalR e n) : type_scope.
+
+
+(* Exercise: write bevalR in terms of inference rules.
+  |- bevalR BTrue true
+  |- bevalR BFalse false
+   aevalR e1 a1, aevalR e2 a2 |- bevalR (BEq e1 e2) (a1 =? a2)
+   aevalR e1 a1, aevalR e2 a2 |- bevalR (BNeq e1 e2) (negb (a1 =? a2))
+   aevalR e1 a1, aevalR e2 a2 |- bevalR (BLe e1 e2) (a1 <=? a2)
+   aevalR e1 a1, aevalR e2 a2 |- bevalR (BGt e1 e2) (negb (a1 <=? a2))
+   bevalR e b |- bevalR (BNot e) (negb b)
+   bevalR e1 b1, bevalR e2 b2 |- bevalR (BAnd e1 e2) (andb b1 b2)
+
+ *)
+
+Theorem aevalR_iff_aeval : forall a n,
+  (a ==> n) <-> aeval a = n.
+Proof.
+  split.
+  - (* -> *)
+    intros H.
+    induction H; simpl.
+    + (* E_ANum *)
+      reflexivity.
+    + (* E_APlus *)
+      rewrite IHaevalR1. rewrite IHaevalR2. reflexivity.
+    + (* E_AMinus *)
+      rewrite IHaevalR1. rewrite IHaevalR2. reflexivity.
+    + (* E_AMult *)
+      rewrite IHaevalR1. rewrite IHaevalR2. reflexivity.
+  - (* <- *)
+    generalize dependent n.
+    induction a;
+       simpl; intros; subst.
+    + (* ANum *)
+      apply E_ANum.
+    + (* APlus *)
+      apply E_APlus.
+      * apply IHa1. reflexivity.
+      * apply IHa2. reflexivity.
+    + (* AMinus *)
+      apply E_AMinus.
+      * apply IHa1. reflexivity.
+      * apply IHa2. reflexivity.
+    + (* AMult *)
+      apply E_AMult.
+      * apply IHa1. reflexivity.
+      * apply IHa2. reflexivity.
+Qed.
+
+
+Theorem aevalR_iff_aeval' : forall a n,
+  (a ==> n) <-> aeval a = n.
+Proof.
+  (* WORKED IN CLASS *)
+  split.
+  - (* -> *)
+    intros H; induction H; subst; reflexivity.
+  - (* <- *)
+    generalize dependent n.
+    induction a; simpl; intros; subst; constructor;
+       try apply IHa1; try apply IHa2; reflexivity.
+Qed.
+
+
+Reserved Notation "e '==>b' b" (at level 90, left associativity).
+Inductive bevalR: bexp -> bool -> Prop :=
+  | E_BTrue :
+      bevalR BTrue true 
+  | E_BFalse :
+      bevalR BFalse false 
+  | E_BEq (e1 e2 : aexp) (b1 b2 : nat):
+      (e1 ==> b1) -> (e2 ==> b2) ->
+      bevalR (BEq e1 e2) (b1 =? b2)
+  | E_BNeq (e1 e2 : aexp) (b1 b2 : nat):
+      (e1 ==> b1) -> (e2 ==> b2) ->
+      bevalR (BNeq e1 e2) (negb (b1 =? b2))
+  | E_BLe (e1 e2 : aexp) (b1 b2 : nat):
+      (e1 ==> b1) -> (e2 ==> b2) ->
+      bevalR (BLe e1 e2) (b1 <=? b2)
+  | E_BGt (e1 e2 : aexp) (b1 b2 : nat):
+      (e1 ==> b1) -> (e2 ==> b2) ->
+      bevalR (BGt e1 e2) (negb (b1 <=? b2))
+  | E_BNot (e : bexp) (b : bool):
+      (e ==>b b) ->
+      bevalR (BNot e) (negb b)
+  | E_BAnd (e1 e2 : bexp) (b1 b2 : bool):
+      (e1 ==>b b1) -> (e2 ==>b b2) ->
+      bevalR (BAnd e1 e2) (andb b1 b2)
+
+where "e '==>b' b" := (bevalR e b) : type_scope
+.
+
+(* I keep this original proof, and use a simplified version as 
+   bevalR_iff_beval' later *)
+Lemma bevalR_iff_beval : forall b bv,
+  b ==>b bv <-> beval b = bv.
+Proof.
+  induction b.
+        (* True and False, similar *)
+  - intros bv. destruct bv.
+    + split. 
+      * intros H. reflexivity.
+      * intros H. apply E_BTrue.
+    + split.
+      * intros contra. inversion contra.
+      * intros contra. discriminate contra.
+  - intros bv. destruct bv.
+    + split.
+      * intros contra. inversion contra.
+      * intros contra. discriminate contra.
+    + split. 
+      * intros H. reflexivity.
+      * intros H. apply E_BFalse.
+        (* Eq, Neq, Le, and Gq, similar *)
+  - intros bv. destruct bv;
+    split;
+      try ( intros H; simpl;
+        inversion H;
+        apply aevalR_iff_aeval in H3;
+        apply aevalR_iff_aeval in H4;
+        rewrite -> H3; rewrite -> H4; reflexivity);
+      try ( intros H; 
+        inversion H;
+        apply E_BEq;
+        apply aevalR_iff_aeval; reflexivity).
+  - intros bv. destruct bv;
+    split;
+      try ( intros H; simpl;
+        inversion H;
+        apply aevalR_iff_aeval in H3;
+        apply aevalR_iff_aeval in H4;
+        rewrite -> H3; rewrite -> H4; reflexivity);
+      try ( intros H; 
+        inversion H;
+        apply E_BNeq;
+        apply aevalR_iff_aeval; reflexivity).
+  - intros bv. destruct bv;
+    split;
+      try ( intros H; simpl;
+        inversion H;
+        apply aevalR_iff_aeval in H3;
+        apply aevalR_iff_aeval in H4;
+        rewrite -> H3; rewrite -> H4; reflexivity);
+      try ( intros H; 
+        inversion H;
+        apply E_BLe;
+        apply aevalR_iff_aeval; reflexivity).
+  - intros bv. destruct bv;
+    split;
+      try ( intros H; simpl;
+        inversion H;
+        apply aevalR_iff_aeval in H3;
+        apply aevalR_iff_aeval in H4;
+        rewrite -> H3; rewrite -> H4; reflexivity);
+      try ( intros H; 
+        inversion H;
+        apply E_BGt;
+        apply aevalR_iff_aeval; reflexivity).
+        (* These two are quite special *)
+  - intros bv. split.
+    + intros H. simpl.
+      inversion H.
+      apply IHb in H1.
+      rewrite -> H1. reflexivity.
+    + intros H. simpl in H. 
+      assert (beval b = negb bv) as H1.
+      { rewrite <- H. rewrite -> negb_involutive. reflexivity. }
+      apply IHb in H1.
+      rewrite <- negb_involutive.
+      apply E_BNot.
+      exact H1.
+  - intros bv. split.
+    + intros H.
+      inversion H.
+      simpl.
+      apply IHb1 in H2. apply IHb2 in H4.
+      rewrite -> H2. rewrite -> H4.
+      reflexivity.
+    + intros H.
+      simpl in H.
+      destruct (beval b1) eqn:Eq1, (beval b2) eqn:Eq2;
+        rewrite <- Eq1 in IHb1; rewrite <- Eq2 in IHb2;
+        apply IHb1 in Eq1; apply IHb2 in Eq2;
+        rewrite <- H;
+        apply E_BAnd;
+        try (exact Eq1); try (exact Eq2).
+Qed.
+
+(* simplified version. *)
+Lemma bevalR_iff_beval' : forall b bv,
+  b ==>b bv <-> beval b = bv.
+Proof.
+  induction b;
+  intros bv; split;
+  intros H;
+  (* Eq, Neq, Le, and Gq, similar *)
+  try (
+    simpl;
+    inversion H;
+    try (apply aevalR_iff_aeval in H1);
+    try (apply aevalR_iff_aeval in H2);
+    try (apply aevalR_iff_aeval in H3);
+    try (apply aevalR_iff_aeval in H4);
+    try (rewrite -> H1; rewrite -> H3); 
+    try (rewrite -> H2; rewrite -> H4); 
+    reflexivity);
+  try ( 
+    inversion H;
+    try (apply E_BEq);
+    try (apply E_BNeq);
+    try (apply E_BLe);
+    try (apply E_BGt);
+    apply aevalR_iff_aeval; reflexivity).
+  (* True and False, similar *)
+  (* One annoying thing is that I can't 
+     use destruct in try, because it affects the global context. *)
+   - destruct bv.
+     + apply E_BTrue.
+     + discriminate H.
+   - destruct bv.
+     + discriminate H.
+     + apply E_BFalse.
+  (* Not and And. These two are quite special *)
+  - simpl.
+    inversion H.
+    apply IHb in H1.
+    rewrite -> H1. reflexivity.
+  - simpl in H. 
+    assert (beval b = negb bv) as H1.
+    { rewrite <- H. rewrite -> negb_involutive. reflexivity. }
+    apply IHb in H1.
+    rewrite <- negb_involutive.
+    apply E_BNot.
+    exact H1.
+  - inversion H.
+    simpl.
+    apply IHb1 in H2. apply IHb2 in H4.
+    rewrite -> H2. rewrite -> H4.
+    reflexivity.
+  - simpl in H.
+    destruct (beval b1) eqn:Eq1, (beval b2) eqn:Eq2;
+      rewrite <- Eq1 in IHb1; rewrite <- Eq2 in IHb2;
+      apply IHb1 in Eq1; apply IHb2 in Eq2;
+      rewrite <- H;
+      apply E_BAnd;
+      try (exact Eq1); try (exact Eq2).
+Qed.
 End AExp.
