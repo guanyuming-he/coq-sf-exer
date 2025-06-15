@@ -15,7 +15,7 @@ Definition state := total_map nat.
 
 
 Inductive aexp : Type :=
-  | ANum (n : nat)
+| ANum (n : nat)
   | AId (x : string) (* <--- NEW *)
   | APlus (a1 a2 : aexp)
   | AMinus (a1 a2 : aexp)
@@ -438,3 +438,402 @@ Proof.
       exists st'. apply E_IfFalse.
       { exact Eqb. } { exact IH2. }
 Qed.
+
+
+Inductive sinstr : Type :=
+| SPush (n : nat)
+| SLoad (x : string)
+| SPlus
+| SMinus
+| SMult.
+
+Fixpoint s_execute (st : state) (stack : list nat)
+  (prog : list sinstr) : list nat
+  :=
+  match prog with
+  | [] => stack 
+  | h::t =>
+      match h with
+      | SPush n =>
+          s_execute st (n::stack) t 
+      | SLoad x =>
+          s_execute st ((st x)::stack) t 
+      | SPlus =>
+          match stack with 
+          | [] => s_execute st stack t 
+          | top::rest =>
+              match rest with
+              | [] => s_execute st stack t
+              | top'::rest' =>
+                  s_execute st ((top'+top)::rest') t
+              end
+          end
+      | SMinus =>
+          match stack with 
+          | [] => s_execute st stack t 
+          | top::rest =>
+              match rest with
+              | [] => s_execute st stack t
+              | top'::rest' =>
+                  s_execute st ((top'-top)::rest') t
+              end
+          end
+      | SMult =>
+          match stack with 
+          | [] => s_execute st stack t 
+          | top::rest =>
+              match rest with
+              | [] => s_execute st stack t
+              | top'::rest' =>
+                  s_execute st ((top'*top)::rest') t
+              end
+          end
+      end
+  end.
+
+
+
+Check s_execute.
+Example s_execute1 :
+     s_execute empty_st []
+       [SPush 5; SPush 3; SPush 1; SMinus]
+   = [2; 5].
+Proof. reflexivity. Qed.
+
+Example s_execute2 :
+     s_execute (X !-> 3) [3;4]
+       [SPush 4; SLoad X; SMult; SPlus]
+   = [15; 4].
+Proof. reflexivity. Qed.
+
+
+(*
+Inductive aexp : Type :=
+  | ANum (n : nat)
+  | AId (x : string) (* <--- NEW *)
+  | APlus (a1 a2 : aexp)
+  | AMinus (a1 a2 : aexp)
+  | AMult (a1 a2 : aexp).
+ *)
+
+Fixpoint s_compile (e : aexp) : list sinstr
+  :=
+  match e with 
+  | ANum n => [SPush n]
+  | AId x => [SLoad x]
+  | APlus a1 a2 =>
+      (s_compile a1) ++ (s_compile a2) ++ [SPlus] 
+  | AMinus a1 a2 =>
+      (s_compile a1) ++ (s_compile a2) ++ [SMinus] 
+  | AMult a1 a2 =>
+      (s_compile a1) ++ (s_compile a2) ++ [SMult] 
+  end.
+
+Example s_compile1 :
+  s_compile <{ X - (2 * Y) }>
+  = [SLoad X; SPush 2; SLoad Y; SMult; SMinus].
+Proof.
+  reflexivity.
+Qed.
+
+Theorem execute_app : forall st p1 p2 stack,
+  s_execute st stack (p1 ++ p2) =
+  s_execute st (s_execute st stack p1) p2.
+Proof.
+  intros st. induction p1.
+  - intros p2 stack.
+    simpl. reflexivity.
+  - intros p2 stack.
+    destruct a.
+    + simpl. 
+      apply (IHp1 p2 (n::stack)).
+    + simpl.
+      apply (IHp1 p2 (st x::stack)).
+      (* Don't know how to simplify the next
+         three very similar ones. *)
+    + simpl.
+      destruct stack as [|t stack'].
+      * simpl. apply IHp1.
+      * destruct stack' as [|t' stack''].
+        { simpl. apply IHp1. }
+        { simpl. apply (IHp1 p2 (t' + t :: stack'')). }
+    + simpl.
+      destruct stack as [|t stack'].
+      * simpl. apply IHp1.
+      * destruct stack' as [|t' stack''].
+        { simpl. apply IHp1. }
+        { simpl. apply (IHp1 p2 (t' - t :: stack'')). }
+    + simpl.
+      destruct stack as [|t stack'].
+      * simpl. apply IHp1.
+      * destruct stack' as [|t' stack''].
+        { simpl. apply IHp1. }
+        { simpl. apply (IHp1 p2 (t' * t :: stack'')). }
+Qed.
+
+
+
+Lemma s_compile_correct_aux : forall st e stack,
+  s_execute st stack (s_compile e) = aeval st e :: stack.
+Proof.
+  intros st. induction e; intros stack;
+  (* The two simple SPush and SLoad *)
+  try reflexivity;
+  (* The three operations *)
+  try (
+    simpl;
+    (* Use the previous thm to separate the execution of 
+       s_compile e1 out *)
+    rewrite (execute_app st (s_compile e1) _ stack);
+    rewrite -> IHe1;
+    (* Use the previous thm to separate the execution of 
+       s_compile e2 out *)
+    rewrite (execute_app st (s_compile e2) _ _);
+    rewrite -> IHe2;
+    simpl; reflexivity
+  ).
+Qed.
+
+Theorem s_compile_correct : forall (st : state) (e : aexp),
+  s_execute st [] (s_compile e) = [ aeval st e ].
+Proof.
+  intros st e.
+  rewrite -> s_compile_correct_aux.
+  reflexivity.
+Qed.
+
+
+(* Short circuit beval *)
+Fixpoint beval_sc (st : state) 
+               (b : bexp) : bool :=
+  match b with
+  | <{true}> => true
+  | <{false}> => false
+  | <{a1 = a2}> => (aeval st a1) =? (aeval st a2)
+  | <{a1 <> a2}> => negb ((aeval st a1) =? (aeval st a2))
+  | <{a1 <= a2}> => (aeval st a1) <=? (aeval st a2)
+  | <{a1 > a2}> => negb ((aeval st a1) <=? (aeval st a2))
+  | <{~ b1}> => negb (beval st b1)
+  | <{b1 && b2}> => if (beval st b1) then (beval st b2) else false
+  end.
+
+Theorem beval_beval_sc_eq : 
+  forall st b,
+  beval st b = beval_sc st b.
+Proof.
+  intros st. destruct b;
+  try reflexivity.
+Qed.
+
+Module BreakImp.
+
+Inductive com : Type :=
+  | CSkip
+  | CBreak (* <--- NEW *)
+  | CAsgn (x : string) (a : aexp)
+  | CSeq (c1 c2 : com)
+  | CIf (b : bexp) (c1 c2 : com)
+  | CWhile (b : bexp) (c : com).
+Notation "'break'" := CBreak (in custom com at level 0).
+Notation "'skip'" :=
+         CSkip (in custom com at level 0) : com_scope.
+Notation "x := y" :=
+         (CAsgn x y)
+            (in custom com at level 0, x constr at level 0,
+             y at level 85, no associativity) : com_scope.
+Notation "x ; y" :=
+         (CSeq x y)
+           (in custom com at level 90, right associativity) : com_scope.
+Notation "'if' x 'then' y 'else' z 'end'" :=
+         (CIf x y z)
+           (in custom com at level 89, x at level 99,
+            y at level 99, z at level 99) : com_scope.
+Notation "'while' x 'do' y 'end'" :=
+         (CWhile x y)
+            (in custom com at level 89, x at level 99, y at level 99) : com_scope.
+
+
+Inductive result : Type :=
+  | SContinue
+  | SBreak.
+
+Reserved Notation "st '=[' c ']=>' st' '/' s"
+     (at level 40, c custom com at level 99, st' constr at next level).
+
+Inductive ceval : com -> state -> result -> state -> Prop :=
+  | E_Skip : forall st,
+      st =[ CSkip ]=> st / SContinue
+  | E_Break : forall st, 
+      st =[ CBreak ]=> st / SBreak
+  | E_Asgn : forall st x a n,
+      aeval st a = n ->
+      st =[ CAsgn x a ]=> (x !-> n; st) / SContinue
+  | E_SeqBrk : forall c1 c2 st st',
+      st  =[ c1 ]=> st' / SBreak  ->
+      st  =[ c1 ; c2 ]=> st' / SBreak
+  | E_SeqCont : forall c1 c2 st st' st'' s,
+      st  =[ c1 ]=> st' / SContinue  ->
+      st' =[ c2 ]=> st'' / s ->
+      st  =[ c1 ; c2 ]=> st'' / s
+  | E_IfTrue : forall st st' b c1 c2 s,
+      beval st b = true ->
+      st =[ c1 ]=> st' / s ->
+      st =[ if b then c1 else c2 end]=> st' / s
+  | E_IfFalse : forall st st' b c1 c2 s,
+      beval st b = false ->
+      st =[ c2 ]=> st' / s ->
+      st =[ if b then c1 else c2 end]=> st' / s
+  | E_WhileFalse : forall b st c,
+      beval st b = false ->
+      st =[ while b do c end ]=> st / SContinue
+  | E_WhileTrueCont : forall st st' st'' b c s,
+      beval st b = true ->
+      st  =[ c ]=> st' / SContinue ->
+      st' =[ while b do c end ]=> st'' / s ->
+      (* Here s can only be SContinue anyway, as proven 
+         later in while_continue *)
+      st  =[ while b do c end ]=> st'' / SContinue
+  | E_WhileTrueBrk : forall st st' b c,
+      beval st b = true ->
+      st  =[ c ]=> st' / SBreak ->
+      st  =[ while b do c end ]=> st' / SContinue
+
+  where "st '=[' c ']=>' st' '/' s" := (ceval c st s st').
+
+Theorem break_ignore : forall c st st' s,
+     st =[ break; c ]=> st' / s ->
+     st = st'.
+Proof.
+  intros c st st' s H.
+  inversion H.
+  - inversion H5. reflexivity.
+  - inversion H2. (* impossible *)
+Qed.
+  
+
+Theorem while_continue : forall b c st st' s,
+  st =[ while b do c end ]=> st' / s ->
+  s = SContinue.
+Proof.
+  intros b c st st' s H.
+  inversion H; reflexivity.
+Qed.
+
+Theorem while_stops_on_break : forall b c st st',
+  beval st b = true ->
+  st =[ c ]=> st' / SBreak ->
+  st =[ while b do c end ]=> st' / SContinue.
+Proof.
+  intros b c st st' H1 H2.
+  apply E_WhileTrueBrk.
+  - exact H1.
+  - exact H2.
+Qed.
+
+Theorem seq_continue : forall c1 c2 st st' st'',
+  st =[ c1 ]=> st' / SContinue ->
+  st' =[ c2 ]=> st'' / SContinue ->
+  st =[ c1 ; c2 ]=> st'' / SContinue.
+Proof.
+  intros c1 c2 st st' st'' H1 H2.
+  apply E_SeqCont with (st' := st').
+  - exact H1.
+  - exact H2.
+Qed.
+
+Theorem seq_stops_on_break : forall c1 c2 st st',
+  st =[ c1 ]=> st' / SBreak ->
+  st =[ c1 ; c2 ]=> st' / SBreak.
+Proof.
+  intros c1 c2 st st' H.
+  apply E_SeqBrk.
+  exact H.
+Qed.
+
+
+Theorem while_break_true : forall b c st st',
+  st =[ while b do c end ]=> st' / SContinue ->
+  beval st' b = true ->
+  exists st'', st'' =[ c ]=> st' / SBreak.
+Proof.
+  intros b c st st' H1. 
+  (* here is like what's done in loop_never_stops *)
+  remember <{ while b do c end }> as loopdef eqn:Heqloopdef.
+  induction H1; intros H2; try discriminate Heqloopdef.
+  - inversion Heqloopdef.
+    rewrite H1 in H. rewrite H in H2. discriminate H2.
+  - apply (IHceval2 Heqloopdef H2).
+  - inversion Heqloopdef.
+    rewrite H4 in H1.
+    exists st. exact H1.
+Qed.
+
+Theorem ceval_deterministic: forall (c:com) st st1 st2 s1 s2,
+     st =[ c ]=> st1 / s1 ->
+     st =[ c ]=> st2 / s2 ->
+     st1 = st2 /\ s1 = s2.
+Proof.
+  induction c; intros st st1 st2 s1 s2 H1 H2; split;
+  try (inversion H1; inversion H2; reflexivity);
+  try (
+    inversion H1; inversion H2; 
+    rewrite <- H4; rewrite <- H7;
+    reflexivity
+  ).
+  - inversion H1. inversion H2.
+    rewrite -> H6 in H12.
+    rewrite H12. reflexivity.
+  - inversion H1; inversion H2.
+    + destruct (IHc1 _ _ _ _ _ H6 H12) as [HF _].
+      exact HF.
+    + destruct (IHc1 _ _ _ _ _ H6 H9) as [_ contra].
+      discriminate contra.
+    + destruct (IHc1 _ _ _ _ _ H3 H13) as [_ contra].
+      discriminate contra.
+    + destruct (IHc1 _ _ _ _ _ H3 H10) as [H20 _].
+      rewrite <- H20 in H14.
+      destruct (IHc2 _ _ _ _ _ H7 H14) as [HF _].
+      exact HF.
+  - inversion H1; inversion H2.
+    + reflexivity.
+    + destruct (IHc1 _ _ _ _ _ H6 H9) as [_ contra].
+      discriminate contra.
+    + destruct (IHc1 _ _ _ _ _ H3 H13) as [_ contra].
+      discriminate contra.
+    + destruct (IHc1 _ _ _ _ _ H3 H10) as [H20 _].
+      rewrite <- H20 in H14.
+      destruct (IHc2 _ _ _ _ _ H7 H14) as [_ HF].
+      exact HF.
+  - inversion H1; inversion H2.
+    + destruct (IHc1 _ _ _ _ _ H8 H16) as [HF _].
+      exact HF.
+    + rewrite -> H7 in H15. 
+      discriminate H15.
+    + rewrite -> H7 in H15. 
+      discriminate H15.
+    + destruct (IHc2 _ _ _ _ _ H8 H16) as [HF _].
+      exact HF.
+  - inversion H1; inversion H2.
+    + destruct (IHc1 _ _ _ _ _ H8 H16) as [_ HF].
+      exact HF.
+    + rewrite -> H7 in H15. 
+      discriminate H15.
+    + rewrite -> H7 in H15. 
+      discriminate H15.
+    + destruct (IHc2 _ _ _ _ _ H8 H16) as [_ HF].
+      exact HF.
+      (* Here, for while, I can't blindly invert the execution,
+         as that leads me nowhere when b = true and c is not break. 
+         Instead, use the previous result to always introduce a break point
+       *)
+  - destruct (beval st1 b) eqn:Eqb1, (beval st2 b) eqn:Eqb2.
+    + (* To use while_break_true, a few conditions need to be established *)
+      assert (s1 = SContinue) as H3.
+      { apply while_continue in H1. exact H1. }
+      assert (s2 = SContinue) as H4.
+      { apply while_continue in H2. exact H2. }
+      rewrite -> H3 in H1. rewrite -> H4 in H2.
+      assert (H5 := (while_break_true _ _ _ _ H1 Eqb1)).
+      assert (H6 := (while_break_true _ _ _ _ H2 Eqb2)).
+Qed.
+
