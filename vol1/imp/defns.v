@@ -773,6 +773,62 @@ Theorem ceval_deterministic: forall (c:com) st st1 st2 s1 s2,
      st =[ c ]=> st2 / s2 ->
      st1 = st2 /\ s1 = s2.
 Proof.
+  intros c st st1 st2 s1 s2 H1. 
+  (* Note that H1 is not dependent on st2 and s2 *)
+  generalize dependent st2.
+  generalize dependent s2.
+  induction H1; intros s2 st2 H2.
+  - inversion H2. split; reflexivity.
+  - inversion H2. split; reflexivity.
+  - inversion H2.
+    split.
+    + rewrite -> H in H6. rewrite -> H6. reflexivity.
+    + reflexivity.
+  - inversion H2. 
+    + apply IHceval in H6.
+      exact H6.
+    + apply IHceval in H3.
+      destruct H3 as [_ contra].
+      discriminate contra.
+  - inversion H2.
+    + apply IHceval1 in H5.
+      destruct H5 as [_ contra].
+      discriminate contra.
+    + apply IHceval1 in H1.
+      destruct H1 as [H1 _].
+      rewrite <- H1 in H6. apply IHceval2 in H6.
+      exact H6.
+  - inversion H2.
+    + apply IHceval in H9.
+      exact H9.
+    + rewrite -> H in H8. discriminate H8.
+  - inversion H2.
+    + rewrite -> H in H8. discriminate H8.
+    + apply IHceval in H9.
+      exact H9.
+  - inversion H2; split; 
+    try reflexivity;
+    try (rewrite H in H3; discriminate H3).
+  - inversion H2; subst.
+    + rewrite -> H in H6. discriminate H6.
+    + destruct (IHceval1 _ _ H4) as [H4' _].
+      rewrite <- H4' in H8.
+      destruct (IHceval2 _ _ H8) as [H8' _].
+      split.
+      * exact H8'.
+      * reflexivity.
+    + destruct (IHceval1 _ _ H7) as [_ contra].
+      discriminate contra.
+  - inversion H2; subst.
+    + rewrite -> H in H7. discriminate H7.
+    + destruct (IHceval _ _ H5) as [_ contra].
+      discriminate contra.
+    + destruct (IHceval _ _ H8) as [H8' _].
+      split.
+      * exact H8'.
+      * reflexivity.
+
+  (* An attempt to induct on c, which seems to be stuck in the end 
   induction c; intros st st1 st2 s1 s2 H1 H2; split;
   try (inversion H1; inversion H2; reflexivity);
   try (
@@ -835,5 +891,164 @@ Proof.
       rewrite -> H3 in H1. rewrite -> H4 in H2.
       assert (H5 := (while_break_true _ _ _ _ H1 Eqb1)).
       assert (H6 := (while_break_true _ _ _ _ H2 Eqb2)).
+  *)
 Qed.
 
+End BreakImp.
+
+
+Module AddForLoop.
+
+Inductive com : Type :=
+  | CSkip
+  | CBreak 
+  | CAsgn (x : string) (a : aexp)
+  | CSeq (c1 c2 : com)
+  | CIf (b : bexp) (c1 c2 : com)
+  | CWhile (b : bexp) (c : com)
+  | CFor (b : bexp) (asgn iter c : com)
+    (* It's like for (asgn i = ?; b i < ?; iter ++i) *)
+.
+Notation "'break'" := CBreak (in custom com at level 0).
+Notation "'skip'" :=
+         CSkip (in custom com at level 0) : com_scope.
+Notation "x := y" :=
+         (CAsgn x y)
+            (in custom com at level 0, x constr at level 0,
+             y at level 85, no associativity) : com_scope.
+Notation "x ; y" :=
+         (CSeq x y)
+           (in custom com at level 90, right associativity) : com_scope.
+Notation "'if' x 'then' y 'else' z 'end'" :=
+         (CIf x y z)
+           (in custom com at level 89, x at level 99,
+            y at level 99, z at level 99) : com_scope.
+Notation "'while' x 'do' y 'end'" :=
+         (CWhile x y)
+            (in custom com at level 89, x at level 99, y at level 99) : com_scope.
+(* Why doesn't it work? *)
+Notation "'for' asgn ';' b ';' iter 'do' c 'end'" :=
+         (CFor b asgn iter c)
+            (in custom com at level 88, 
+            asgn at level 99, iter at level 99, c at level 99,
+            b at level 99) : com_scope.
+
+Inductive result : Type :=
+  | SContinue
+  | SBreak.
+
+Reserved Notation "st '=[' c ']=>' st' '/' s"
+     (at level 40, c custom com at level 99, st' constr at next level).
+
+Inductive ceval : com -> state -> result -> state -> Prop :=
+  | E_Skip : forall st,
+      st =[ CSkip ]=> st / SContinue
+  | E_Break : forall st, 
+      st =[ CBreak ]=> st / SBreak
+  | E_Asgn : forall st x a n,
+      aeval st a = n ->
+      st =[ CAsgn x a ]=> (x !-> n; st) / SContinue
+  | E_SeqBrk : forall c1 c2 st st',
+      st  =[ c1 ]=> st' / SBreak  ->
+      st  =[ c1 ; c2 ]=> st' / SBreak
+  | E_SeqCont : forall c1 c2 st st' st'' s,
+      st  =[ c1 ]=> st' / SContinue  ->
+      st' =[ c2 ]=> st'' / s ->
+      st  =[ c1 ; c2 ]=> st'' / s
+  | E_IfTrue : forall st st' b c1 c2 s,
+      beval st b = true ->
+      st =[ c1 ]=> st' / s ->
+      st =[ if b then c1 else c2 end]=> st' / s
+  | E_IfFalse : forall st st' b c1 c2 s,
+      beval st b = false ->
+      st =[ c2 ]=> st' / s ->
+      st =[ if b then c1 else c2 end]=> st' / s
+  | E_WhileFalse : forall b st c,
+      beval st b = false ->
+      st =[ while b do c end ]=> st / SContinue
+  | E_WhileTrueCont : forall st st' st'' b c s,
+      beval st b = true ->
+      st  =[ c ]=> st' / SContinue ->
+      st' =[ while b do c end ]=> st'' / s ->
+      (* Here s can only be SContinue anyway, as proven 
+         later in while_continue *)
+      st  =[ while b do c end ]=> st'' / SContinue
+  | E_WhileTrueBrk : forall st st' b c,
+      beval st b = true ->
+      st  =[ c ]=> st' / SBreak ->
+      st  =[ while b do c end ]=> st' / SContinue
+  (* It turns out that a for loop can be implemented with a while loop. *)
+  | E_For : forall st st' s asgn b iter c,
+      st =[ asgn ; while b do (c ; iter) end ]=> st' / s ->
+      st =[ CFor b asgn iter c ]=> st' / s
+
+  where "st '=[' c ']=>' st' '/' s" := (ceval c st s st').
+
+
+(* It's exactly the same as the previous one without for loop,
+  except the new case to handle for loop. *)
+Theorem ceval_deterministic: forall (c:com) st st1 st2 s1 s2,
+     st =[ c ]=> st1 / s1 ->
+     st =[ c ]=> st2 / s2 ->
+     st1 = st2 /\ s1 = s2.
+Proof.
+  intros c st st1 st2 s1 s2 H1. 
+  (* Note that H1 is not dependent on st2 and s2 *)
+  generalize dependent st2.
+  generalize dependent s2.
+  induction H1; intros s2 st2 H2.
+  - inversion H2. split; reflexivity.
+  - inversion H2. split; reflexivity.
+  - inversion H2.
+    split.
+    + rewrite -> H in H6. rewrite -> H6. reflexivity.
+    + reflexivity.
+  - inversion H2. 
+    + apply IHceval in H6.
+      exact H6.
+    + apply IHceval in H3.
+      destruct H3 as [_ contra].
+      discriminate contra.
+  - inversion H2.
+    + apply IHceval1 in H5.
+      destruct H5 as [_ contra].
+      discriminate contra.
+    + apply IHceval1 in H1.
+      destruct H1 as [H1 _].
+      rewrite <- H1 in H6. apply IHceval2 in H6.
+      exact H6.
+  - inversion H2.
+    + apply IHceval in H9.
+      exact H9.
+    + rewrite -> H in H8. discriminate H8.
+  - inversion H2.
+    + rewrite -> H in H8. discriminate H8.
+    + apply IHceval in H9.
+      exact H9.
+  - inversion H2; split; 
+    try reflexivity;
+    try (rewrite H in H3; discriminate H3).
+  - inversion H2; subst.
+    + rewrite -> H in H6. discriminate H6.
+    + destruct (IHceval1 _ _ H4) as [H4' _].
+      rewrite <- H4' in H8.
+      destruct (IHceval2 _ _ H8) as [H8' _].
+      split.
+      * exact H8'.
+      * reflexivity.
+    + destruct (IHceval1 _ _ H7) as [_ contra].
+      discriminate contra.
+  - inversion H2; subst.
+    + rewrite -> H in H7. discriminate H7.
+    + destruct (IHceval _ _ H5) as [_ contra].
+      discriminate contra.
+    + destruct (IHceval _ _ H8) as [H8' _].
+      split.
+      * exact H8'.
+      * reflexivity.
+  - inversion H2. subst.
+    apply IHceval in H8.
+    exact H8.
+Qed.
+
+End AddForLoop.
