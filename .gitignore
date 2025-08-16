@@ -45,3 +45,7 @@ time-of-build-after.log
 time-of-build-before.log
 time-of-build-both.log
 time-of-build-pretty.log
+
+# Extracted files
+vol1/extraction/*.ml
+vol1/extraction/*.mli
