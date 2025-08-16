@@ -4,7 +4,7 @@ From Coq Require Import PeanoNat.
 Import Nat.
 From Coq Require Import EqNat.
 From LF.imp Require Import defns.
-From LF.maps Require Import maps.
+From LF.maps Require Import defn.
 
 
 Notation "'LETOPT' x <== e1 'IN' e2"

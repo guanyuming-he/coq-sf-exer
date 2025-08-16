@@ -8,7 +8,7 @@ From Coq Require Import EqNat. Import Nat.
 From Coq Require Import Lia.
 From Coq Require Import List. Import ListNotations.
 From Coq Require Import Strings.String.
-From LF.maps Require Import maps.
+From LF.maps Require Import defn.
 Set Default Goal Selector "!".
 
 Definition state := total_map nat.

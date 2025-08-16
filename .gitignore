@@ -49,3 +49,6 @@ time-of-build-pretty.log
 # Extracted files
 vol1/extraction/*.ml
 vol1/extraction/*.mli
+vol1/extraction/*.cmt
+vol1/extraction/*.cmti
+

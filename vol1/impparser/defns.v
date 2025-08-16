@@ -53,7 +53,7 @@ Definition string_of_list (xs : list ascii) : string :=
   fold_right String EmptyString xs.
 Definition token := string.
 
-From LF.maps Require Import maps.
+From LF.maps Require Import defn.
 
 (*
   A token is a consecutive subsequence of a string that has the

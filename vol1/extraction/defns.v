@@ -30,7 +30,7 @@ Extract Inductive sumbool => "bool" ["true" "false"].
 
 From LF.imp Require Import defns.
 From LF.impparser Require Import defns.
-From LF.maps Require Import maps.
+From LF.maps Require Import defn.
 
 Extraction "imp.ml" empty_st ceval_step parse.
 
