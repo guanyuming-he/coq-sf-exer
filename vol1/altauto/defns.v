@@ -48,3 +48,35 @@ Proof.
     * apply IH1.
     * apply IH2.
 Qed.
+
+Theorem andb_eq_orb :
+  forall (b c : bool),
+  (andb b c = orb b c) ->
+  b = c.
+Proof. 
+	intros b c.
+	destruct b, c;
+	intros H; try (discriminate H); reflexivity.
+Qed.
+
+Theorem add_assoc : forall n m p : nat,
+    n + (m + p) = (n + m) + p.
+Proof. 
+	intros n. induction n; intros m p;
+	try reflexivity;
+	simpl; rewrite -> IHn; reflexivity.
+Qed.
+
+Fixpoint nonzeros (lst : list nat) :=
+  match lst with
+  | nil => nil
+  | 0 :: t => nonzeros t
+  | h :: t => h :: nonzeros t
+  end.
+Lemma nonzeros_app : forall lst1 lst2 : list nat,
+  nonzeros (lst1 ++ lst2) = (nonzeros lst1) ++ (nonzeros lst2).
+Proof. 
+	intros l1. induction l1; intros l2;
+	try reflexivity;
+	destruct a; simpl; rewrite -> IHl1; reflexivity.
+Qed.
