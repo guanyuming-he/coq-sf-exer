@@ -17,7 +17,7 @@ Arguments Star {T} _.
 Reserved Notation "s =~ re" (at level 80).
 
 (* For list X *)
-From LF.poly Require Import defns.
+From LF.poly Require Export defns.
 
 Inductive exp_match {T} : list T -> reg_exp T -> Prop :=
   | MEmpty : [] =~ EmptyStr
@@ -57,7 +57,7 @@ Proof.
 Qed.
 
 (* For important results about lists *)
-From LF.poly Require Import poly_list_exer.
+From LF.poly Require Export poly_list_exer.
 
  Lemma MStar1 :
   forall T s (re : reg_exp T) ,
