@@ -137,95 +137,49 @@ Proof.
         | s1 re1 s2 re2 Hmatch1 IH1 Hmatch2 IH2
         | s1 re1 re2 Hmatch IH | s2 re1 re2 Hmatch IH
         | re | s1 s2 re Hmatch1 IH1 Hmatch2 IH2].
-  - (* MEmpty *) simpl. apply MEmpty.
-  - (* MChar *) simpl. apply MChar.
-  - (* MApp *) simpl.
-    destruct re1;
+  - (* MEmpty *) simpl; apply MEmpty.
+  - (* MChar *) simpl; apply MChar.
+  - (* MApp *) simpl; destruct re1;
     try (inversion IH1; simpl; destruct re2; apply IH2);
     ( 
 		  destruct re2;
 			try ( inversion IH2; rewrite app_nil_r; apply IH1);
       (apply MApp; [ apply IH1 | apply IH2 ])
 	  ).
-  - (* MUnionL *) simpl.
-    destruct re1;
-    [
-			inversion IH
- 		|	 
-			destruct re2;
-			[
-				apply IH
-			|	(
-				apply MUnionL; apply IH
-				)
-			| ..
-			]
+  - (* My comment: search for for_each_goal in Ltac in Coq manual *)
+    (* MUnionL *) simpl; destruct re1; 
+		[ 
+			inversion IH |
+			(
+				destruct re2;
+				[
+					apply IH |
+					apply MUnionL; apply IH ..
+			  ]
+			) ..
 		].
-  - (* MUnionR *) simpl.
-    destruct re1.
-    + apply IH.
-    + destruct re2.
-      * inversion IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-    + destruct re2.
-      * inversion IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-    + destruct re2.
-      * inversion IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-    + destruct re2.
-      * inversion IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-    + destruct re2.
-      * inversion IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
-      * apply MUnionR. apply IH.
- - (* MStar0 *) simpl.
-    destruct re.
-    + apply MEmpty.
-    + apply MEmpty.
-    + apply MStar0.
-    + apply MStar0.
-    + apply MStar0.
-    + simpl.
-      destruct re.
-      * apply MStar0.
-      * apply MStar0.
-      * apply MStar0.
-      * apply MStar0.
-      * apply MStar0.
-      * apply MStar0.
- - (* MStarApp *) simpl;
-   destruct re;
+	- (* MUnionR *) simpl; destruct re1; 
+		[ 
+			apply IH |
+			(
+				destruct re2;
+				[
+					inversion IH |
+					apply MUnionR; apply IH ..
+			  ]
+			) ..
+		].
+ - (* MStar0 *) simpl; destruct re;
 	 [
-     inversion IH1 
-   | inversion IH1; inversion IH2; apply MEmpty 
-   | [> apply star_app; 
-		 [
-       apply MStar1; apply IH1 |
-       apply IH2
-		 ]
-		 ]
-   | ..
+	  apply MEmpty | apply MEmpty |
+    apply MStar0 .. |
+    simpl; destruct re; apply MStar0
+	 ].
+ - (* MStarApp *) simpl; destruct re;
+	 try (inversion IH1; inversion IH2; apply MEmpty);
+	 [ 
+	 	 (apply star_app; [apply MStar1; apply IH1 | apply IH2 ])
+		 ..
 	 ].
 Qed.
 
