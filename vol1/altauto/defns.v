@@ -654,15 +654,8 @@ Proof.
         apply IH2 in H1.
         destruct H1 as [s3 [s4 [s5]]].
         destruct H1 as [H1 [H2 [H3 H4]]].
-        exists s3, s4, s5.
-        split.
-        { simpl. apply H1. }
-        split.
-        { apply H2. }
-        split.
-        { apply H3. }
-        { apply H4. }
-      * exists [], s1, s2.
+        exists s3, s4, s5; auto.
+			* exists [], s1, s2.
         split.
         { rewrite <- Es1. reflexivity. }
         split.
@@ -731,3 +724,29 @@ Proof.
         { apply Hmatch2. }
       }
 Qed.
+
+Ltac destructpf x :=
+  destruct x; try reflexivity.
+
+Theorem andb3_exchange :
+  forall b c d, andb (andb b c) d = andb (andb b d) c.
+Proof. 
+	intros b c d;
+	destructpf b; destructpf c; destructpf d.
+Qed.	
+
+Ltac destructpf' x :=
+	destruct x; simpl; try (intros H; rewrite H); try reflexivity.
+
+Theorem andb_true_elim2' : forall b c : bool,
+    andb b c = true -> c = true.
+Proof.
+	intros b c. destructpf' b; destructpf' c.
+Qed.
+
+Theorem andb3_exchange' :
+  forall b c d, andb (andb b c) d = andb (andb b d) c.
+Proof.
+	intros b c d;
+	destructpf' b; destructpf' c; destructpf' d.
+Qed.	
