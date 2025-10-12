@@ -10,7 +10,7 @@ procedure. I also removed some non-exercise content, as the repo mainly serves
 as a collection of exercise solutions.
 
 ## Progress
-Volume 1 (LF), Chapter 17 (AltAuto)
+Finished Volume 1, LF.
 
 # Compilation?
 For volume `X`,
