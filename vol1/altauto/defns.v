@@ -750,3 +750,85 @@ Proof.
 	intros b c d;
 	destructpf' b; destructpf' c; destructpf' d.
 Qed.	
+
+Ltac imp_intuition :=
+  repeat match goal with
+				 | [ H : ?P |- ?P ] => apply H
+				 | [ |- forall _, _ ] => intro
+				 | [ H1 : ?P -> ?Q, H2 : ?P |- _ ] => apply H1 in H2
+         end.
+
+Example imp1 : forall (P : Prop), P -> P.
+Proof. imp_intuition. Qed.
+Example imp2 : forall (P Q : Prop), P -> (P -> Q) -> Q.
+Proof. imp_intuition. Qed.
+Example imp3 : forall (P Q R : Prop), (P -> Q -> R) -> (Q -> P -> R).
+Proof. imp_intuition. Qed.
+
+(* For me to understand how it plays out *)
+Example imp3' : forall (P Q R : Prop), (P -> Q -> R) -> (Q -> P -> R).
+Proof. 
+	intros P Q R.
+	intros H1.
+	intros H2 H3.
+	apply H1 in H3.
+	apply H3. apply H2.
+Qed.
+
+Inductive nor (P Q : Prop) :=
+	| stroke : ~P -> ~Q -> nor P Q.
+
+Theorem nor_not_or : forall (P Q : Prop),
+	nor P Q -> ~ (P \/ Q).
+Proof.
+	intros.
+	destruct H.
+	unfold not.
+	intros Hor. destruct Hor.
+	- contradiction.
+	- contradiction.
+Qed.
+
+Ltac imp_intuition' :=
+  repeat match goal with
+				 | [ H : ?P |- ?P ] => apply H
+				 | [ |- forall _, _ ] => intro
+				 | [ H1 : ?P -> ?Q, H2 : ?P |- _ ] => apply H1 in H2
+				 (* destruct nor *)
+				 | [ H : nor _ _ |- _ ] => destruct H
+				 | [ H : _ \/ _ |- _ ] => destruct H
+				 | [ H : _ /\ _ |- _ ] => destruct H
+				 (* unfold not *)
+				 | [ |- ~(?P) ] => unfold not
+				 (* contradiction *)
+				 | [ H1 : ?P, H2 : ~(?P) |- _ ] => apply H2 in H1; destruct H1
+				 (* split *)
+				 | [ |- _ <-> _ ] => split
+				 | [ |- _ /\ _ ] => split
+				 (* apply stroke *)
+				 | [ |- nor _ _ ] => apply stroke
+         end.
+
+Theorem nor_not_or' : forall (P Q : Prop),
+	nor P Q -> ~ (P \/ Q).
+Proof.
+	imp_intuition'.
+Qed.
+
+Theorem nor_comm' : forall (P Q : Prop),
+    nor P Q <-> nor Q P.
+Proof. 
+	imp_intuition'.
+Qed.
+
+Theorem nor_not' : forall (P : Prop),
+    nor P P <-> ~P.
+Proof. 
+	imp_intuition'.
+Qed.
+
+Theorem nor_not_and' : forall (P Q : Prop),
+    nor P Q -> ~ (P /\ Q).
+Proof. 
+	imp_intuition'.
+Qed.
